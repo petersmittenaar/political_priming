@@ -30,7 +30,7 @@
 		// how many times to repeat each prime-target combination
 		var nRepsPerPrimeTargetCombination = 2;
 		// timings
-		var tPrime = 16;
+		var tPrime = 300;
 		var tMask = function() {return Math.floor( Math.random() * 2000) + 50;};
 		var tResponseMax = 3000;
 		var tFeedback = 3000;
@@ -65,15 +65,15 @@
 					// after each response, check whether response was correct
 					on_finish: function(data){
 						var correct = false;
+						var responded = false;
 						// check if given response is same as desired response
 						if(data.desiredResponse == String.fromCharCode(data.key_press)) {
 							correct = true;
 						}
-						if(data.rt < 0) {
+						if(data.rt > 0) {
 							responded = true;
-						} else {
-							responded = false;
 						}
+						console.log(correct)
 						jsPsych.data.addDataToLastTrial({correct: correct, responded: responded});
 					}
 				},
@@ -82,7 +82,8 @@
 					stimulus: function() {
 						console.log('doing feedback!')
 						var lasttrialdata = jsPsych.data.getLastTrialData();
-						if(lasttrialdata.data.correct) {
+						console.log(lasttrialdata)
+						if(lasttrialdata.correct) {
 							feedback = "nice!";
 						} else {
 							feedback = "awful!";
@@ -102,13 +103,12 @@
 				{
 					stimulus: '<p>' + fixation + '</p>',
 					data: {t: 'fixation'},
-					timing_response: tITI
-				},
+					timing_response: tITI				},
 				// prime
 				{
 					stimulus: '<p>' + primes[i] + '</p>',
 					data: {t: 'prime'},
-					timing_response: tPrime				
+					timing_response: tPrime		
 				},
 				// mask
 				{
@@ -132,9 +132,11 @@
 		var all_trials = {
 		    type: "single-stim",
 		    is_html: true,
-		    prompt: "<p>" + targets[0] + " --> " + keys[0] + "</p>" +
-	  			"<p>" + targets[1] + " --> " + keys[1] + "</p>",
-		    timeline: trialTimelines
+		    // prompt: "<p>" + targets[0] + " --> " + keys[0] + "</p>" +
+	  			// "<p>" + targets[1] + " --> " + keys[1] + "</p>",
+		    timeline: trialTimelines,
+		    response_ends_trial: false,
+		    timing_post_trial: 0
 		  };
 
 		timeline.push(instructions_block);
