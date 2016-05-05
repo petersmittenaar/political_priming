@@ -35,11 +35,11 @@
 		// calculate how many combinations of primes and unique targets there are
 		var nCombinationsTargets = primes.length * targets.length;
 		// how many times to repeat each prime-target combination
-		var nRepsPerPrimeTargetCombination = 5;
+		var nRepsPerPrimeTargetCombination = 3;
 		// timings
 		var tPrime = 32;
 		var tMask = function() {return Math.floor( Math.random() * 200) + 50;};
-		var tResponseMax = 3000;
+		var tResponseMax = 1500;
 		var tFeedback = 500;
 		var tITI = function() {return Math.floor( Math.random() * 1000) + 1250;}
 		// define fixation cross
@@ -194,29 +194,31 @@
 		    "</table>" +
 		    "<p>Press Q to complete the experiment. Thank you!</p>";
 		  },
-		  choices: jsPsych.pluginAPI.convertKeyCharacterToKeyCode("q")
+		  choices: ["q"],
+		  is_html: true
 		};
 		timeline.push(debrief_block)
 
 		jsPsych.init({
 			timeline: timeline,
 			display_element: $('#jspsych_target'),
-			on_finish: function() {
-				// jsPsych.data.displayData('json');
-			    $.ajax({
-			      type: "POST",
-			      url: "/experiment-data",
-			      data: JSON.stringify(jsPsych.data.getData()),
-			      contentType: "application/json"
-			    })
-			    .done(function() {
+			// on_finish: function() {
+			// 	console.log(JSON.stringify(jsPsych.data.getData()))
+			// 	// jsPsych.data.displayData('json');
+			//     $.ajax({
+			//       type: "POST",
+			//       url: "/experiment-data",
+			//       data: JSON.stringify(jsPsych.data.getData()),
+			//       contentType: "application/json"
+			//     })
+			//     .done(function() {
 			      window.location.href = "finish";
-			    })
-			    .fail(function() {
-			      alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
-			      window.location.href = "finish";
-			    })
-			  }
+			//     })
+			//     .fail(function() {
+			//       alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+			//       window.location.href = "finish";
+			//     })
+			//   }
 		});
 	</script>
 </html>
