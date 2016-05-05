@@ -20,7 +20,7 @@
 	</body>
 	<script>
 		// indicate primes; will be loaded from separate file and randomised etc in later versions
-		var primes = ["man", "woman"];
+		var primes = ["GOOD", "BAD"];
 		// var targets = ["Clinton", "Trump"];
 		var targets = ["../stim/hillary.jpg", "../stim/donald.jpg"]
 		var targetCategories = ["Hillary Clinton", "Donald Trump"]; // same length as targets; in case there are multiple targets per category
@@ -30,17 +30,17 @@
 		// generate the mask as random string
 		// inspired by https://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript
 		// var mask = function(){return Math.random().toString(36).slice(-10).toUpperCase();};
-		var mask = 'SDGSDSGHS'
+		var mask = '#########'
 
 		// calculate how many combinations of primes and unique targets there are
 		var nCombinationsTargets = primes.length * targets.length;
 		// how many times to repeat each prime-target combination
 		var nRepsPerPrimeTargetCombination = 2;
 		// timings
-		var tPrime = 16;
+		var tPrime = 32;
 		var tMask = function() {return Math.floor( Math.random() * 200) + 50;};
 		var tResponseMax = 3000;
-		var tFeedback = 1000;
+		var tFeedback = 500;
 		var tITI = function() {return Math.floor( Math.random() * 1000) + 1250;}
 		// define fixation cross
 		var fixation = "*";
@@ -180,8 +180,8 @@
 			  }
 			}
 		var debrief_block = {
-		  type: "text",
-		  text: function() {
+		  type: "single-stim",
+		  stimulus: function() {
 		    var subject_data = getSubjectData();
 		    return "<p>You responded correctly on "+subject_data.accuracy+"% of "+
 		    "the trials.</p><p>Your average response time was <strong>" +
@@ -192,8 +192,9 @@
 		    "<tr><td>" + targetCategories[1] + "</td><td>" + primes[0] + "</td><td>" + subject_data.rt_by_targetprime[1][0] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[1][0]) + "%</td></tr>" +
 		    "<tr><td>" + targetCategories[1] + "</td><td>" + primes[1] + "</td><td>" + subject_data.rt_by_targetprime[1][1] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[1][1]) + "%</td></tr>" +
 		    "</table>" +
-		    "<p>Press any key to complete the experiment. Thank you!</p>";
-		  }
+		    "<p>Press Q to complete the experiment. Thank you!</p>";
+		  },
+		  choices: jsPsych.pluginAPI.convertKeyCharacterToKeyCode("q")
 		};
 		timeline.push(debrief_block)
 
@@ -202,19 +203,19 @@
 			display_element: $('#jspsych_target'),
 			on_finish: function() {
 				// jsPsych.data.displayData('json');
-			    // $.ajax({
-			    //   type: "POST",
-			    //   url: "/experiment-data",
-			    //   data: JSON.stringify(jsPsych.data.getData()),
-			    //   contentType: "application/json"
-			    // })
-			    // .done(function() {
+			    $.ajax({
+			      type: "POST",
+			      url: "/experiment-data",
+			      data: JSON.stringify(jsPsych.data.getData()),
+			      contentType: "application/json"
+			    })
+			    .done(function() {
 			      window.location.href = "finish";
-			    // })
-			    // .fail(function() {
-			    //   alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
-			    //   window.location.href = "/";
-			    // })
+			    })
+			    .fail(function() {
+			      alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+			      window.location.href = "finish";
+			    })
 			  }
 		});
 	</script>
