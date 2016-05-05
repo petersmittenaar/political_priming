@@ -6,6 +6,8 @@
 		<script type="text/javascript" src="jsPsych/jspsych.js"></script>
 		<script type="text/javascript" src="jsPsych/plugins/jspsych-text.js"></script>
 		<script type="text/javascript" src="jsPsych/plugins/jspsych-single-stim.js"></script>
+		<script type="text/javascript" src="jsPsych/plugins/jspsych-multi-stim-multi-response.js"></script>
+		<script type="text/javascript" src="jsPsych/plugins/jspsych-categorize.js"></script>
 		<link rel="stylesheet" type="text/css" href="jsPsych/css/jspsych.css">
 		<link rel="stylesheet" type="text/css" href="css/experiment.css">
 	</head>
@@ -18,186 +20,202 @@
 	</body>
 	<script>
 		// indicate primes; will be loaded from separate file and randomised etc in later versions
-		var primes = ["good", "bad"];
-		var targets = ["Clinton", "Trump"];
-		
-		// keys to use, number needs to match number of targets
-		var keys = ["F", "J"];
-		// https://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript
-		var mask = function(){return Math.random().toString(36).slice(-10).toUpperCase();};
+		var primes = ["man", "woman"];
+		// var targets = ["Clinton", "Trump"];
+		var targets = ["../stim/hillary.jpg", "../stim/donald.jpg"]
+		var targetCategories = ["Hillary Clinton", "Donald Trump"]; // same length as targets; in case there are multiple targets per category
+		var keys = ["f", "j"]; // keys to use, number needs to match number of targets
+		// convert keys to numeric
+		var keys_numeric = []; for(var i = 0; i < keys.length; i++) {keys_numeric[i] = jsPsych.pluginAPI.convertKeyCharacterToKeyCode(keys[i])}
+		// generate the mask as random string
+		// inspired by https://stackoverflow.com/questions/1349404/generate-a-string-of-5-random-characters-in-javascript
+		// var mask = function(){return Math.random().toString(36).slice(-10).toUpperCase();};
+		var mask = 'SDGSDSGHS'
 
 		// calculate how many combinations of primes and unique targets there are
 		var nCombinationsTargets = primes.length * targets.length;
 		// how many times to repeat each prime-target combination
 		var nRepsPerPrimeTargetCombination = 2;
 		// timings
-		var tPrime = 300;
-		var tMask = function() {return Math.floor( Math.random() * 2000) + 50;};
+		var tPrime = 16;
+		var tMask = function() {return Math.floor( Math.random() * 200) + 50;};
 		var tResponseMax = 3000;
-		var tFeedback = 3000;
-		var tITI = function() {return Math.floor( Math.random() * 4000) + 750;}
+		var tFeedback = 1000;
+		var tITI = function() {return Math.floor( Math.random() * 1000) + 1250;}
+		// define fixation cross
 		var fixation = "*";
+		// initialise the timeline
 		var timeline = [];
+		// first thing people see on the screen
 		var instructions_block = {
 		  type: "text",
-		  text: "<p>If " + targets[0] + " comes up, press " + keys[0] + " as fast as you can.</p>" +
-	  			"<p>If " + targets[1] + " comes up, press " + keys[1] + " as fast as you can.</p>" +
+		  text: "<p>If " + targetCategories[0] + " comes up, press " + keys[0].toUpperCase() + " as fast as you can.</p>" +
+	  			"<p>If " + targetCategories[1] + " comes up, press " + keys[1].toUpperCase() + " as fast as you can.</p>" +
 		     	"<p>Press any key to begin.</p>", 
 	      timing_post_trial: 2000
 		};
+		var prompt = 	"<p>" + targetCategories[0] + " --> " + keys[0].toUpperCase() + "</p>" +
+	  					"<p>" + targetCategories[1] + " --> " + keys[1].toUpperCase() + "</p>"
 		
-
-		
-
-		// build jsPsych trial structure for single-stim, for the bit of experiment
-		// where they actually respond. This will go into randomization.factorial 
-		// I think to combine with prime etc
-		var trialsTarget = []
-		// for each target
-		for (i = 0; i < targets.length; i++) {
-			trialsTarget.push([
-				// target
+		// build the multi-stim structure for each combination of prime and target.
+		// This uses the multi-stim to show fixation, prime, mask, and the categorize plugin
+		// to collect the response
+		var all_trial_types = [];
+		// for each prime
+		for (var iPrime = 0; iPrime < primes.length; iPrime++) {
+			// for each target
+			for (var iTarget = 0; iTarget < targets.length; iTarget++) {
+				// first part of trial
+				all_trial_types.push([
 				{
-					stimulus: '<p>' + targets[i] + '</p>',
-					data: {desiredResponse: keys[i]},
+					type: 'single-stim',
+					is_html: true,
+					response_ends_trial: false,
+					timing_post_trial: 0,
+					data: {target: targetCategories[iTarget]},
+					timeline: [
+						{stimulus: fixation, timing_response: tITI},
+						{stimulus: primes[iPrime], timing_response: tPrime},
+						{stimulus: mask, timing_response: tMask}
+					],
+					// prompt: prompt
+
+				},
+				// second part of trial
+				{
+					type: 'categorize',
+					stimulus: targets[iTarget],
+					// is_html: true,
+					key_answer: keys_numeric[iTarget],
+					choices: keys_numeric,
+					show_feedback_on_timeout: true,
 					timing_response: tResponseMax,
-					choices: keys,
-					response_ends_trial: true,
-					// after each response, check whether response was correct
-					on_finish: function(data){
-						var correct = false;
-						var responded = false;
-						// check if given response is same as desired response
-						if(data.desiredResponse == String.fromCharCode(data.key_press)) {
-							correct = true;
-						}
-						if(data.rt > 0) {
-							responded = true;
-						}
-						console.log(correct)
-						jsPsych.data.addDataToLastTrial({correct: correct, responded: responded});
-					}
-				},
-				// feedback
-				{
-					stimulus: function() {
-						console.log('doing feedback!')
-						var lasttrialdata = jsPsych.data.getLastTrialData();
-						console.log(lasttrialdata)
-						if(lasttrialdata.correct) {
-							feedback = "nice!";
-						} else {
-							feedback = "awful!";
-						}
-						return '<p>' + feedback + " Only took you " + lasttrialdata.rt + " ms." + '</p>'
-					},
-					timing_response: tFeedback
-				}
-			]);
-		}
+					timing_feedback_duration: tFeedback,
+					show_stim_with_feedback: false,
+					data: {prime: primes[iPrime], target: targetCategories[iTarget]},
+					timing_post_trial: 0,
+					// prompt: prompt
+				}]); // all_trial_types.push()
+			} // target loop
+		} // prime loop
 
-		// set up timeline for fixation + prime + mask
-		var trialsPrime = []
-		for (i = 0; i < primes.length; i++) {	
-			trialsPrime.push([
-				// fixation
-				{
-					stimulus: fixation,
-					data: {t: 'fixation'},
-					timing_response: tITI				},
-				// prime
-				{
-					stimulus: '<p>' + primes[i] + '</p>',
-					data: {t: 'prime'},
-					timing_response: tPrime		
-				},
-				// mask
-				{
-					stimulus: '<p>' + mask + '</p>',
-					data: {t: 'mask'},
-					timing_response: tMask
-				}
-			]);
-		}
-
-		factors_filled = {prime: trialsPrime, target: trialsTarget};
-		// set up all combinations of primes and targets. 
-		var allCombs = jsPsych.randomization.factorial(factors_filled, nRepsPerPrimeTargetCombination, false);
-		var allCombsShuffled = jsPsych.randomization.shuffle(allCombs)
-		// now we need to create a timeline in each of these objects rather than the prime and target keys.
-		// This is so we can add it to the var all_trials timeline.
-		trialTimelines = [];
-		for (i = 0; i < allCombsShuffled.length; i++) {
-			trialTimelines.push({timeline: allCombsShuffled[i]["prime"].concat(allCombsShuffled[i]["target"])});
-		}
-		var all_trials = {
-		    type: "single-stim",
-		    is_html: true,
-		    // prompt: "<p>" + targets[0] + " --> " + keys[0] + "</p>" +
-	  			// "<p>" + targets[1] + " --> " + keys[1] + "</p>",
-		    timeline: trialTimelines,
-		    response_ends_trial: false,
-		    timing_post_trial: 0
-		  };
+		// now we have nPrimes*nTargets elements in all_trial_types. Expand and shuffle
+		var all_trials_shuffled = jsPsych.randomization.repeat(all_trial_types, nRepsPerPrimeTargetCombination);
+		// now concatenate all trials rather than have them in subarrays
+		var all_trials = {timeline: [].concat.apply([], all_trials_shuffled)};
 
 		timeline.push(instructions_block);
-		timeline.push(all_trials)
-		console.log(all_trials)
+		timeline.push(all_trials);
+		// timeline.push(all_trials);
+		console.log(all_trials);
 
-		// function getSubjectData() {
+		function getSubjectData() {
 
-		// 	  var trials = jsPsych.data.getTrialsOfType('single-stim');
+			  var trials = jsPsych.data.getTrialsOfType('categorize');
 
-		// 	  var sum_rt = 0;
-		// 	  var correct_trial_count = 0;
-		// 	  var correct_rt_count = 0;
-		// 	  for (var i = 0; i < trials.length; i++) {
-		// 	    if (trials[i].correct == true) {
-		// 	      correct_trial_count++;
-		// 	      if(trials[i].rt > -1){
-		// 	        sum_rt += trials[i].rt;
-		// 	        correct_rt_count++;
-		// 	      }
-		// 	    }
-		// 	  }
-		// 	  return {
-		// 	    rt: Math.floor(sum_rt / correct_rt_count),
-		// 	    accuracy: Math.floor(correct_trial_count / trials.length * 100)
-		// 	  }
-		// 	}
-		// var debrief_block = {
-		//   type: "text",
-		//   text: function() {
-		//     var subject_data = getSubjectData();
-		//     return "<p>You responded correctly on "+subject_data.accuracy+"% of "+
-		//     "the trials.</p><p>Your average response time was <strong>" +
-		//     subject_data.rt + "ms</strong>. Press any key to complete the "+
-		//     "experiment. Thank you!</p>";
-		//   }
-		// };
-		// timeline.push(debrief_block)
+			  var sum_rt = 0;
+			  var correct_trial_count = 0;
+			  var correct_rt_count = 0;
+			  // calculate overall performance
+			  for (var i = 0; i < trials.length; i++) {
+			    if (trials[i].correct == true) {
+			      correct_trial_count++;
+			      if(trials[i].rt > -1){
+			        sum_rt += trials[i].rt;
+			        correct_rt_count++;
+			      }
+			    }
+			  }
+			  // calculate performance for each target
+			  var sum_rt_by_target = [0, 0];
+			  var correct_trial_count_by_target = [0, 0];
+			  var rt_by_target = [0, 0];
+			  var correct_by_target = [0, 0];
+			  for (var iTarget = 0; iTarget < targetCategories.length; iTarget++) {
+			  	for (var i = 0; i < trials.length; i++) {
+			  		// check if this trial contained this target
+			  		if (trials[i].target == targetCategories[iTarget]) {
+			  			if (trials[i].correct == true) {
+					      correct_trial_count_by_target[iTarget]++;
+					      if(trials[i].rt > -1){
+					        sum_rt_by_target[iTarget] += trials[i].rt;
+					      }
+					    }
+			  		}
+			  	}
+			  	rt_by_target[iTarget] = sum_rt_by_target[iTarget] / correct_trial_count_by_target[iTarget];
+			  	correct_by_target[iTarget] = correct_trial_count_by_target[iTarget] / (nRepsPerPrimeTargetCombination * primes.length);
+			  }
+			  // calculate performance for each target-prime combo. Outer array is target, inner is prime.
+			  // assumes 2 primes and 2 targets for now in its initialisation
+			var sum_rt_by_targetprime = [[0, 0], [0, 0]];
+			var correct_trial_count_by_targetprime = [[0, 0], [0, 0]];
+			var rt_by_targetprime = [[0, 0], [0, 0]];
+			var correct_by_targetprime = [[0, 0], [0, 0]];
+			for (var iTarget = 0; iTarget < targetCategories.length; iTarget++) {
+				for (var iPrime = 0; iPrime < primes.length; iPrime++) {
+				  	for (var i = 0; i < trials.length; i++) {
+				  		// check if this trial contained this target
+				  		if (trials[i].target == targetCategories[iTarget] && trials[i].prime == primes[iPrime]) {
+				  			if (trials[i].correct == true) {
+					      		correct_trial_count_by_targetprime[iTarget][iPrime]++;
+					        	sum_rt_by_targetprime[iTarget][iPrime] += trials[i].rt;
+						    }
+				  		}
+					}
+					rt_by_targetprime[iTarget][iPrime] = sum_rt_by_targetprime[iTarget][iPrime] / correct_trial_count_by_targetprime[iTarget][iPrime];
+				  	correct_by_targetprime[iTarget][iPrime] = correct_trial_count_by_targetprime[iTarget][iPrime] / nRepsPerPrimeTargetCombination;
+				}
+				  	
+		  	}
+
+			// return all of it
+			  return {
+			    rt: Math.floor(sum_rt / correct_rt_count),
+			    accuracy: Math.floor(correct_trial_count / trials.length * 100),
+			    rt_by_target: rt_by_target,
+			    correct_by_target: correct_by_target,
+			    rt_by_targetprime: rt_by_targetprime,
+			    correct_by_targetprime: correct_by_targetprime
+			  }
+			}
+		var debrief_block = {
+		  type: "text",
+		  text: function() {
+		    var subject_data = getSubjectData();
+		    return "<p>You responded correctly on "+subject_data.accuracy+"% of "+
+		    "the trials.</p><p>Your average response time was <strong>" +
+		    subject_data.rt + "ms</strong>.</p>" +
+		    "<table style='width:100%' border='1'><tr><td>Target</td><td>Prime</td><td>Speed (ms)</td><td>Accuracy (%)</td></tr>" + 
+		    "<tr><td>" + targetCategories[0] + "</td><td>" + primes[0] + "</td><td>" + subject_data.rt_by_targetprime[0][0] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[0][0]) + "%</td></tr>" +
+		    "<tr><td>" + targetCategories[0] + "</td><td>" + primes[1] + "</td><td>" + subject_data.rt_by_targetprime[0][1] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[0][1]) + "%</td></tr>" +
+		    "<tr><td>" + targetCategories[1] + "</td><td>" + primes[0] + "</td><td>" + subject_data.rt_by_targetprime[1][0] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[1][0]) + "%</td></tr>" +
+		    "<tr><td>" + targetCategories[1] + "</td><td>" + primes[1] + "</td><td>" + subject_data.rt_by_targetprime[1][1] + " ms</td><td>" + Math.floor(100*subject_data.correct_by_targetprime[1][1]) + "%</td></tr>" +
+		    "</table>" +
+		    "<p>Press any key to complete the experiment. Thank you!</p>";
+		  }
+		};
+		timeline.push(debrief_block)
 
 		jsPsych.init({
 			timeline: timeline,
 			display_element: $('#jspsych_target'),
 			on_finish: function() {
-		        jsPsych.data.displayData('json');
-		    }
-			// on_finish: function() {
-			//     $.ajax({
-			//       type: "POST",
-			//       url: "/experiment-data",
-			//       data: JSON.stringify(jsPsych.data.getData()),
-			//       contentType: "application/json"
-			//     })
-			//     .done(function() {
-			//       window.location.href = "finish";
-			//     })
-			//     .fail(function() {
-			//       alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
-			//       window.location.href = "/";
-			//     })
-			//   }
+				// jsPsych.data.displayData('json');
+			    // $.ajax({
+			    //   type: "POST",
+			    //   url: "/experiment-data",
+			    //   data: JSON.stringify(jsPsych.data.getData()),
+			    //   contentType: "application/json"
+			    // })
+			    // .done(function() {
+			      window.location.href = "finish";
+			    // })
+			    // .fail(function() {
+			    //   alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+			    //   window.location.href = "/";
+			    // })
+			  }
 		});
 	</script>
 </html>
