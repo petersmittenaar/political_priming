@@ -35,7 +35,7 @@
 		// calculate how many combinations of primes and unique targets there are
 		var nCombinationsTargets = primes.length * targets.length;
 		// how many times to repeat each prime-target combination
-		var nRepsPerPrimeTargetCombination = 2;
+		var nRepsPerPrimeTargetCombination = 5;
 		// timings
 		var tPrime = 32;
 		var tMask = function() {return Math.floor( Math.random() * 200) + 50;};
@@ -51,7 +51,7 @@
 		  type: "text",
 		  text: "<p>If " + targetCategories[0] + " comes up, press " + keys[0].toUpperCase() + " as fast as you can.</p>" +
 	  			"<p>If " + targetCategories[1] + " comes up, press " + keys[1].toUpperCase() + " as fast as you can.</p>" +
-		     	"<p>Press any key to begin.</p>", 
+		     	"<p>The experiment will take about " + nCombinationsTargets*nRepsPerPrimeTargetCombination*3 + "seconds. Press any key to begin.</p>", 
 	      timing_post_trial: 2000
 		};
 		var prompt = 	"<p>" + targetCategories[0] + " --> " + keys[0].toUpperCase() + "</p>" +

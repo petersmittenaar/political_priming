@@ -7,15 +7,15 @@ var express = require('express'),
 var app = express();
 
 // // --- set up mongoDB stuff
-// var emptySchema = new mongoose.Schema({}, {strict: false});
-// var Entry = mongoose.model('Entry', emptySchema);
-// // requires CONNECTION to be set through heroku (a URL with username and pwd)
-// mongoose.connect(process.env.CONNECTION);
-// var db = mongoose.connection;
-// db.on('error', console.error.bind(console, 'connection error'));
-// db.once('open', function callback() {
-// 	console.log('database opened');
-// })
+var emptySchema = new mongoose.Schema({}, {strict: false});
+var Entry = mongoose.model('Entry', emptySchema);
+// requires CONNECTION to be set through heroku (a URL with username and pwd)
+mongoose.connect(process.env.CONNECTION);
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error'));
+db.once('open', function callback() {
+	console.log('database opened');
+})
 
 // --- STATIC MIDDLEWARE 
 app.use(express.static(__dirname + '/public'));
