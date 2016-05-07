@@ -203,21 +203,21 @@
 			timeline: timeline,
 			display_element: $('#jspsych_target'),
 			on_finish: function() {
-			// 	console.log(JSON.stringify(jsPsych.data.getData()))
-			// 	// jsPsych.data.displayData('json');
-			//     $.ajax({
-			//       type: "POST",
-			//       url: "/experiment-data",
-			//       data: JSON.stringify(jsPsych.data.getData()),
-			//       contentType: "application/json"
-			//     })
-			//     .done(function() {
+				console.log(JSON.stringify(jsPsych.data.getData()))
+				// jsPsych.data.displayData('json');
+			    $.ajax({
+			      type: "POST",
+			      url: "/experiment-data",
+			      data: JSON.stringify(jsPsych.data.getData()),
+			      contentType: "application/json"
+			    })
+			    .done(function() {
 			      window.location.href = "finish";
-			//     })
-			//     .fail(function() {
-			//       alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
-			//       window.location.href = "finish";
-			//     })
+			    })
+			    .fail(function() {
+			      alert("A problem occurred while writing to the database. Please contact the researcher for more information.")
+			      window.location.href = "finish";
+			    })
 			  }
 		});
 	</script>
