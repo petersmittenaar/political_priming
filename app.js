@@ -1,20 +1,35 @@
 // --- LOADING MODULES
 var express = require('express'),
 	mongoose = require('mongoose'),
-	body_parser = require('body-parser');
+	body_parser = require('body-parser'),
+    pg = require('pg');
+
 
 // --- INSTANTIATE THE APP
 var app = express();
 
 // // --- set up mongoDB stuff
-var emptySchema = new mongoose.Schema({}, {strict: false});
-var Entry = mongoose.model('Entry', emptySchema);
-// requires CONNECTION to be set through heroku (a URL with username and pwd)
-mongoose.connect(process.env.CONNECTION);
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error'));
-db.once('open', function callback() {
-	console.log('database opened');
+// var emptySchema = new mongoose.Schema({}, {strict: false});
+// var Entry = mongoose.model('Entry', emptySchema);
+// // requires CONNECTION to be set through heroku (a URL with username and pwd)
+// mongoose.connect(process.env.CONNECTION);
+// var db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'connection error'));
+// db.once('open', function callback() {
+// 	console.log('database opened');
+// })
+
+// set up postgres stuff
+pg.defaults.ssl = true;
+console.log('process.env.DATABASE_URL = ' + process.env.DATABASE_URL)
+pg.connect(process.env.DATABASE_URL, function(err, client) {
+    if (err) throw err;
+    console.log('Connected to postgres! Getting schemas...');
+    client
+    .query('SELECT table_schema,table_name FROM information_schema.tables;')
+    .on('row', function(row) {
+      console.log(JSON.stringify(row));
+    });
 })
 
 // --- STATIC MIDDLEWARE 
