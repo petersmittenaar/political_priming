@@ -197,7 +197,7 @@
 		};
 		timeline.push(debrief_block)
 		// make sure images are pre-loaded
-		jsPsych.preloadImages(targets, function(){startExperiment();});
+		jsPsych.pluginAPI.preloadImages(targets, function(){startExperiment();});
 		function startExperiment(){
 			jsPsych.init({
 				timeline: timeline,
